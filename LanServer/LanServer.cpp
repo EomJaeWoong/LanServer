@@ -11,12 +11,12 @@ CLanServer::CLanServer()
 	//if (!CNPacket::_ValueSizeCheck())
 	//	CCrashDump::Crash();
 
-	_Session = new SESSION[MAX_SESSION];
+	_Session = new SESSION[eMAX_SESSION];
 
 	///////////////////////////////////////////////////////////////////////////////
 	// 빈 세션 생성
 	///////////////////////////////////////////////////////////////////////////////
-	for (int iCnt = 0; iCnt < MAX_SESSION; iCnt++)
+	for (int iCnt = 0; iCnt < eMAX_SESSION; iCnt++)
 	{
 		///////////////////////////////////////////////////////////////////////////
 		// 세션 정보 구조체 초기화
@@ -38,6 +38,9 @@ CLanServer::CLanServer()
 
 		_Session[iCnt]._bSendFlag = false;
 		_Session[iCnt]._lIOCount = 0;
+
+		memset(_Session[iCnt]._pSentPacket, 0, sizeof(_Session[iCnt]._pSentPacket));
+		_Session[iCnt]._lSentPacketCnt = 0;
 
 		//_Session[iCnt]._Debug = new WSABUF[2];
 	}
@@ -130,7 +133,7 @@ bool				CLanServer::Start(WCHAR* wOpenIP, int iPort, int iWorkerThreadNum, bool 
 		(unsigned int *)&dwThreadID
 		);
 
-	if (iWorkerThreadNum > MAX_THREAD)
+	if (iWorkerThreadNum > eMAX_THREAD)
 		return false;
 
 	_iWorkerThreadNum = iWorkerThreadNum;
@@ -165,32 +168,22 @@ void				CLanServer::Stop()
 ///////////////////////////////////////////////////////////////////////////////////////////
 bool				CLanServer::SendPacket(__int64 iSessionID, CNPacket *pPacket)
 {
-	for (int iCnt = 0; iCnt < MAX_SESSION; iCnt++)
+	for (int iCnt = 0; iCnt < eMAX_SESSION; iCnt++)
 	{
 		if (iSessionID == _Session[iCnt]._iSessionID)
 		{
-			pPacket->SetCustomShortHeader(pPacket->GetDataSize());
-
 			_Session[iCnt]._SendQ.Lock();
-			int iPutSize = _Session[iCnt]._SendQ.Put(
-				(char *)pPacket->GetBufferHeaderPtr(),
-				pPacket->GetDataSize()
-				);
 
-			///////////////////////////////////////////////////////////////////////////////
-			// SendQ가 가득 찼을 때
-			///////////////////////////////////////////////////////////////////////////////
-			/*
-			if (iPutSize < pPacket->GetDataSize())
-			{
-				_Session[iCnt]._SendQ.Put(
-					(char *)pPacket->GetBufferHeaderPtr() + (pPacket->GetDataSize() - iPutSize))
-			}
-			*/
+			pPacket->SetCustomShortHeader(pPacket->GetDataSize());
+			pPacket->addRef();
+			
+			int iPutSize = _Session[iCnt]._SendQ.Put(
+				(char *)&pPacket,
+				sizeof(char *)
+				);
+			_Session[iCnt]._SendQ.Unlock();
 
 			SendPost(&_Session[iCnt]);
-
-			_Session[iCnt]._SendQ.Unlock();
 
 			InterlockedIncrement((LONG *)&_lSendPacketCounter);
 			break;
@@ -206,7 +199,7 @@ bool				CLanServer::SendPacket(__int64 iSessionID, CNPacket *pPacket)
 ///////////////////////////////////////////////////////////////////////////////////////////
 bool				CLanServer::Disconnect(__int64 iSessionID)
 {
-	for (int iCnt = 0; iCnt < MAX_SESSION; iCnt++)
+	for (int iCnt = 0; iCnt < eMAX_SESSION; iCnt++)
 	{
 		if (_Session[iCnt]._iSessionID == iSessionID)
 		{
@@ -254,7 +247,7 @@ int					CLanServer::AccpetThread_update()
 		///////////////////////////////////////////////////////////////////////////////////
 		// 빈 세션 찾아 세션 생성
 		///////////////////////////////////////////////////////////////////////////////////
-		for (int iCnt = 0; iCnt < MAX_SESSION; iCnt++)
+		for (int iCnt = 0; iCnt < eMAX_SESSION; iCnt++)
 		{
 			if (-1 == _Session[iCnt]._iSessionID)
 			{
@@ -292,6 +285,7 @@ int					CLanServer::AccpetThread_update()
 
 				InterlockedIncrement((LONG *)&_lAcceptCounter);
 				InterlockedIncrement((LONG *)&_lAcceptTotalCounter);
+				InterlockedIncrement((LONG *)&_lSessionCount);
 
 				RecvPost(&_Session[iCnt]);
 
@@ -352,8 +346,6 @@ int					CLanServer::WorkerThread_update()
 		//----------------------------------------------------------------------------
 		else if (dwTransferred == 0)
 		{
-			CCrashDump::Crash();
-				
 			DisconnectSession(pSession);
 
 			continue;
@@ -468,57 +460,60 @@ void				CLanServer::RecvPost(SESSION *pSession)
 
 bool				CLanServer::SendPost(SESSION *pSession)
 {
-	int result, iCount = 1;
+	int result, iCount;
 	DWORD dwSendSize, dwFlag = 0;
-	WSABUF wBuf[2];
+	WSABUF wBuf[eMAX_WSABUF];
 
 	do
 	{
 		///////////////////////////////////////////////////////////////////////////////////
 		// SendFlag 확인 및 변경
 		///////////////////////////////////////////////////////////////////////////////////
-		if (true == InterlockedCompareExchange((long *)&pSession->_bSendFlag, true, false))
+		bool bSendFlag = InterlockedCompareExchange((long *)&pSession->_bSendFlag, true, false);
+		if (true == bSendFlag)
 			break;
 
-		memset(wBuf, 0, sizeof(WSABUF) * 2);
+		///////////////////////////////////////////////////////////////////////////////////
+		// SendQ 사이즈 측정
+		///////////////////////////////////////////////////////////////////////////////////
+		int iSendQSize = pSession->_SendQ.GetUseSize();
+		int iPacketSize = sizeof(char *);
+
+		iSendQSize /= iPacketSize;
 
 		///////////////////////////////////////////////////////////////////////////////////
 		// SendQ사이즈 다시 확인
 		///////////////////////////////////////////////////////////////////////////////////
-		if (0 == pSession->_SendQ.GetUseSize())
+		if (0 == iSendQSize)
 		{
 			InterlockedExchange((long *)&pSession->_bSendFlag, false);
-			if (0 < pSession->_SendQ.GetUseSize())		
+			if (0 < pSession->_SendQ.GetUseSize())
 				continue;
 
 			else			break;
 		}
+	
+		memset(wBuf, 0, sizeof(wBuf));
 
-		///////////////////////////////////////////////////////////////////////////////////////
-		// WSABUF 등록
-		///////////////////////////////////////////////////////////////////////////////////////
-		wBuf[0].buf = pSession->_SendQ.GetReadBufferPtr();
-		wBuf[0].len = pSession->_SendQ.GetNotBrokenGetSize();
-
-		pSession->_Debug[0].buf = pSession->_SendQ.GetReadBufferPtr();
-		pSession->_Debug[0].len = pSession->_SendQ.GetNotBrokenGetSize();
-
-		///////////////////////////////////////////////////////////////////////////////////////
-		// 공간이 남아있을 경우 남은 공간 등록
-		///////////////////////////////////////////////////////////////////////////////////////
-		if (pSession->_SendQ.GetUseSize() > pSession->_SendQ.GetNotBrokenGetSize())
+		///////////////////////////////////////////////////////////////////////////////////
+		// WSABUF에 넣기
+		///////////////////////////////////////////////////////////////////////////////////
+		CNPacket *pPacket;
+		for (iCount = 0; iCount < iSendQSize; iCount++)
 		{
-			wBuf[1].buf = pSession->_SendQ.GetBufferPtr();
-			wBuf[1].len = pSession->_SendQ.GetUseSize() -
-				pSession->_SendQ.GetNotBrokenGetSize();
+			pPacket = nullptr;
 
-			pSession->_Debug[1].buf = pSession->_SendQ.GetBufferPtr();
-			pSession->_Debug[1].len = pSession->_SendQ.GetUseSize() -
-				pSession->_SendQ.GetNotBrokenGetSize();
-
-			iCount++;
+			if (iPacketSize != pSession->_SendQ.Get((char *)&pPacket, iPacketSize))
+				CCrashDump::Crash();
+			
+			wBuf[iCount].buf = (char *)pPacket->GetBufferHeaderPtr();
+			wBuf[iCount].len = pPacket->GetDataSize();
+			
+			pSession->_pSentPacket[iCount] = (char *)pPacket;
 		}
 
+		pSession->_lSentPacketCnt += iCount;
+		
 		memset(&pSession->_SendOverlapped, 0, sizeof(OVERLAPPED));
 
 		InterlockedIncrement((LONG *)&pSession->_lIOCount);
@@ -609,17 +604,28 @@ bool				CLanServer::CompleteRecv(SESSION *pSession, DWORD dwTransferred)
 
 bool				CLanServer::CompleteSend(SESSION *pSession, DWORD dwTransferred)
 {
-	pSession->_SendQ.Lock();
+	CNPacket*	pPacket;
+	int iSentCnt;
+
 	//////////////////////////////////////////////////////////////////////////////
 	// 보내기 완료된 데이터 제거
 	//////////////////////////////////////////////////////////////////////////////
-	pSession->_SendQ.RemoveData(dwTransferred);
-	
+	for (iSentCnt = 0; iSentCnt < pSession->_lSentPacketCnt; iSentCnt++)
+	{
+		pPacket = (CNPacket *)pSession->_pSentPacket[iSentCnt];
+		pPacket->Free();
+		pSession->_pSentPacket[iSentCnt] = nullptr;
+	}
+
+	pSession->_lSentPacketCnt -= iSentCnt;
+
 	//////////////////////////////////////////////////////////////////////////////
 	// 다 보냈다고 Flag 변환
 	//////////////////////////////////////////////////////////////////////////////
-	InterlockedExchange((long *)&pSession->_bSendFlag, false);
+	if (false == InterlockedCompareExchange((long *)&pSession->_bSendFlag, false, true))
+		CCrashDump::Crash();
 
+	pSession->_SendQ.Lock();
 	//////////////////////////////////////////////////////////////////////////////
 	// 보낼게 남아있으면 다시 등록
 	//////////////////////////////////////////////////////////////////////////////
@@ -644,7 +650,16 @@ void				CLanServer::DisconnectSession(SESSION *pSession)
 ///////////////////////////////////////////////////////////////////////////////////////////
 void				CLanServer::ReleaseSession(SESSION *pSession)
 {
-	
+	__int64 iSessionID = pSession->_iSessionID;
+
+	pSession->_iSessionID = -1;
+
+	pSession->_SessionInfo._iPort = 0;
+	pSession->_SessionInfo._Socket = INVALID_SOCKET;
+
+	OnClientLeave(iSessionID);
+
+	InterlockedDecrement((LONG *)&_lSessionCount);
 }
 
 

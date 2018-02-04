@@ -49,8 +49,13 @@ typedef struct stSession
 	/////////////////////////////////////////////
 	BOOL				_bSendFlag;
 
-	WSABUF				_Debug[2];
+	/////////////////////////////////////////////
+	// Send중인 Packet 보관
+	/////////////////////////////////////////////
+	char *				_pSentPacket[200];
+	long				_lSentPacketCnt;
 
+	LPVOID				_Debug;
 } SESSION;
 
 #endif

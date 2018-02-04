@@ -14,7 +14,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	while (1)
 	{
 		wprintf(L"------------------------------------------------\n");
-		wprintf(L"Connect Session : %d\n", EchoServer._iSessionCount);
+		wprintf(L"Connect Session : %d\n", EchoServer.GetSessionCount());
 		wprintf(L"Accept TPS : %d\n", EchoServer._lAcceptTPS);
 		wprintf(L"Accept Total : %d\n", EchoServer._lAcceptTotalTPS);
 		wprintf(L"RecvPacket TPS : %d\n", EchoServer._lRecvPacketTPS);

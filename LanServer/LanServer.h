@@ -1,17 +1,22 @@
 #ifndef __LANSERVER__H__
 #define __LANSERVER__H__
 
-enum
-{
-	// 최대 스레드 갯수
-	MAX_THREAD = 50,
-
-	// 최대 세션 갯수
-	MAX_SESSION = 300
-};
-
 class CLanServer
 {
+private :
+	enum eLanServer
+	{
+		// 최대 스레드 갯수
+		eMAX_THREAD = 50,
+
+		// 최대 세션 갯수
+		eMAX_SESSION = 300,
+
+		// 최대 WSABUF 갯수
+		eMAX_WSABUF = 200
+	};
+
+
 public :
 	///////////////////////////////////////////////////////////////////////////////////////////
 	// 생성자, 소멸자
@@ -45,7 +50,7 @@ public :
 	///////////////////////////////////////////////////////////////////////////////////////////
 	// 현재 세션 수
 	///////////////////////////////////////////////////////////////////////////////////////////
-	int							GetSessionCount(){ return _iSessionCount; }
+	int							GetSessionCount(){ return _lSessionCount; }
 
 
 
@@ -138,7 +143,7 @@ public :
 	long						_lSendPacketTPS;
 	long						_lPacketPoolTPS;
 
-	int							_iSessionCount;
+	long						_lSessionCount;
 
 
 
@@ -153,7 +158,7 @@ private :
 	//////////////////////////////////////////////////////////////////////////////////////////
 	HANDLE						_hAcceptThread;
 	HANDLE						_hMonitorThread;
-	HANDLE						_hWorkerThread[MAX_THREAD];
+	HANDLE						_hWorkerThread[eMAX_THREAD];
 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	// LIsten Socket

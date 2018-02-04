@@ -144,6 +144,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="APIHook.h" />
+    <ClInclude Include="ArrayStack.h" />
     <ClInclude Include="AyaStreamSQ.h" />
     <ClInclude Include="CrashDump.h" />
     <ClInclude Include="LanServer.h" />

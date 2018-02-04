@@ -35,8 +35,7 @@ public:
 	----------------------------------------------------------------*/
 	enum e_AYA_STREAM_SQ
 	{
-		//20960
-		eBUFFER_DEFAULT				= 40000,		// 버퍼의 기본 크기.
+		eBUFFER_DEFAULT				= 20960,		// 버퍼의 기본 크기.
 		eBUFFER_BLANK				= 8			 	// 확실한 구분을 위해 8Byte 의 빈공간.
 
 	};

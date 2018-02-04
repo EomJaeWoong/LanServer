@@ -45,6 +45,9 @@
     <ClInclude Include="CrashDump.h">
       <Filter>소스 파일</Filter>
     </ClInclude>
+    <ClInclude Include="ArrayStack.h">
+      <Filter>소스 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
