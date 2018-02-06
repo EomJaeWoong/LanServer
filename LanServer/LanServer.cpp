@@ -398,7 +398,7 @@ int					CLanServer::MonitorThread_update()
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Recv, Send 등록
 ///////////////////////////////////////////////////////////////////////////////////////////
-void				CLanServer::RecvPost(SESSION *pSession)
+void				CLanServer::RecvPost(SESSION *pSession, bool bAcceptRecv)
 {
 	int result, iCount = 1;
 	DWORD dwRecvSize, dwFlag = 0;
@@ -424,7 +424,11 @@ void				CLanServer::RecvPost(SESSION *pSession)
 	
 	memset(&pSession->_RecvOverlapped, 0, sizeof(OVERLAPPED));
 
-	InterlockedIncrement((LONG *)&pSession->_lIOCount);
+	///////////////////////////////////////////////////////////////////////////////////////
+	// 첫 접속시의 Recv는 IOCount를 올리지 않음(로그인 패킷 때문)
+	///////////////////////////////////////////////////////////////////////////////////////
+	if (!bAcceptRecv)
+		InterlockedIncrement((LONG *)&pSession->_lIOCount);
 
 	result = WSARecv(
 		pSession->_SessionInfo._Socket, 

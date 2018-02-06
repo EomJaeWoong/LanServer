@@ -9,7 +9,17 @@ CLanServerEcho::~CLanServerEcho(){}
 
 void CLanServerEcho::OnClientJoin(SESSIONINFO *pSessionInfo, __int64 iSessionID)		// Accept 후 접속처리 완료 후 호출.
 {
-	
+	////////////////////////////////////////////////////////////////////////////
+	// Login Packet 보내기
+	////////////////////////////////////////////////////////////////////////////
+	CNPacket *pLoginPacket = CNPacket::Alloc();
+
+	*pLoginPacket << 0x7fffffffffffffff;
+	pLoginPacket->SetCustomShortHeader(pLoginPacket->GetDataSize());
+
+	SendPacket(iSessionID, pLoginPacket);
+
+	pLoginPacket->Free();
 }
 
 void CLanServerEcho::OnClientLeave(__int64 ClientID)   					// Disconnect 후 호출

@@ -93,11 +93,15 @@ public :
 	/////////////////////////////////////////////////////////////////////
 	DATA				Pop()
 	{
-		if (isEmpty())
-			return NULL;
+		DATA data;
 
+		if (isEmpty())
+			data = NULL;
+
+		data = _pDataArray[--_iTop];
 		_iUseSize--;
-		return _pDataArray[--_iTop];
+
+		return data;
 	}
 
 
