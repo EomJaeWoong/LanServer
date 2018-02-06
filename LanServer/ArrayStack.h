@@ -50,6 +50,8 @@ private :
 		_iStackSize =	iStackSize;
 		_iUseSize	=	0;
 		_iTop		=	0;
+
+		InitializeCriticalSection(&_csStackLock);
 	}
 
 	/////////////////////////////////////////////////////////////////////
@@ -58,6 +60,8 @@ private :
 	void				Destory()
 	{
 		delete[] _pDataArray;
+
+		DeleteCriticalSection(&_csStackLock);
 	}
 
 
@@ -70,10 +74,10 @@ public :
 	/////////////////////////////////////////////////////////////////////
 	bool				Push(DATA data)
 	{
-		if (isEmpty() || isFull())
+		if (isFull())
 			return false;
 
-		_pDataArray[iTop++] = data;
+		_pDataArray[_iTop++] = data;
 
 		_iUseSize++;
 
@@ -92,7 +96,8 @@ public :
 		if (isEmpty())
 			return NULL;
 
-		return _pDataArray[iTop--];
+		_iUseSize--;
+		return _pDataArray[--_iTop];
 	}
 
 

@@ -23,6 +23,11 @@ typedef struct stSession
 	__int64				_iSessionID;
 
 	/////////////////////////////////////////////
+	// Session ID
+	/////////////////////////////////////////////
+	int					_iSessionIndex;
+
+	/////////////////////////////////////////////
 	// 技记 沥焊(家南, IP, 器飘)
 	/////////////////////////////////////////////
 	SESSIONINFO			_SessionInfo;
@@ -55,7 +60,6 @@ typedef struct stSession
 	char *				_pSentPacket[200];
 	long				_lSentPacketCnt;
 
-	LPVOID				_Debug;
 } SESSION;
 
 #endif

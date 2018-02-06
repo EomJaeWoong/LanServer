@@ -33,6 +33,7 @@
 #include "CrashDump.h"
 #include "AyaStreamSQ.h"
 #include "NPacket.h"
+#include "ArrayStack.h"
 #include "Session.h"
 #include "LanServer.h"
 #include "LanServer_Echo.h"
