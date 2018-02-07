@@ -13,15 +13,18 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	while (1)
 	{
-		wprintf(L"------------------------------------------------\n");
+		wprintf(L"=========================================================================\n");
+		wprintf(L"                        LanServer Echo Test\n");
+		wprintf(L"=========================================================================\n");
 		wprintf(L"Connect Session : %d\n", EchoServer.GetSessionCount());
 		wprintf(L"Accept TPS : %d\n", EchoServer._lAcceptTPS);
 		wprintf(L"Accept Total : %d\n", EchoServer._lAcceptTotalTPS);
 		wprintf(L"RecvPacket TPS : %d\n", EchoServer._lRecvPacketTPS);
 		wprintf(L"SendPacket TPS : %d\n", EchoServer._lSendPacketTPS);
+
 		wprintf(L"PacketPool Use : %d\n", 0);
 		wprintf(L"PacketPool Alloc : %d\n", 0);
-		wprintf(L"------------------------------------------------\n\n");
+		wprintf(L"=========================================================================\n");
 
 		Sleep(999);
 

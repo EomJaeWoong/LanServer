@@ -1,4 +1,4 @@
-﻿빌드 시작: 2018-02-06 오후 4:50:32
+﻿빌드 시작: 2018-02-06 오후 9:37:33
      1>2 노드의 "C:\Users\EomJaeWoong\Documents\Visual Studio 2013\Projects\LanServer\LanServer\LanServer\LanServer.vcxproj" 프로젝트(Build 대상)입니다.
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /Zi /nologo /W3 /WX- /sdl /Od /Oi /GL /D WIN32 /D NDEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm- /EHsc /MT /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Yc"stdafx.h" /Fp"x64\Release\LanServer.pch" /Fo"x64\Release\\" /Fd"x64\Release\vc120.pdb" /Gd /TP /errorReport:prompt stdafx.cpp
@@ -12,9 +12,9 @@
          APIHook.cpp
          CrashDump.cpp
          LanServer.cpp
-     1>LanServer.cpp(479): warning C4800: 'LONG' : 'true' 또는 'false'로 bool 값을 강제하고 있습니다(성능 경고).
-     1>LanServer.cpp(486): warning C4244: '초기화 중' : '__int64'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-     1>LanServer.cpp(487): warning C4244: '초기화 중' : '__int64'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+     1>LanServer.cpp(507): warning C4800: 'LONG' : 'true' 또는 'false'로 bool 값을 강제하고 있습니다(성능 경고).
+     1>LanServer.cpp(514): warning C4244: '초기화 중' : '__int64'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+     1>LanServer.cpp(515): warning C4244: '초기화 중' : '__int64'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
          LanServer_Echo.cpp
          main.cpp
        Link:
@@ -31,4 +31,4 @@
 
 빌드했습니다.
 
-경과 시간: 00:00:01.61
+경과 시간: 00:00:01.75

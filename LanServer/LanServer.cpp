@@ -171,6 +171,23 @@ void				CLanServer::Stop()
 ///////////////////////////////////////////////////////////////////////////////////////////
 bool				CLanServer::SendPacket(__int64 iSessionID, CNPacket *pPacket)
 {
+	int iSessionIndex = GET_SESSIONINDEX(iSessionID);
+	
+	pPacket->SetCustomShortHeader(pPacket->GetDataSize());
+	pPacket->addRef();
+
+	_Session[iSessionIndex]._SendQ.Lock();
+	int iPutSize = _Session[iSessionIndex]._SendQ.Put(
+		(char *)&pPacket,
+		sizeof(char *)
+		);
+	_Session[iSessionIndex]._SendQ.Unlock();
+
+	SendPost(&_Session[iSessionIndex]);
+
+	InterlockedIncrement((LONG *)&_lSendPacketCounter);
+
+	/*
 	for (int iCnt = 0; iCnt < eMAX_SESSION; iCnt++)
 	{
 		if (iSessionID == _Session[iCnt]._iSessionID)
@@ -191,6 +208,7 @@ bool				CLanServer::SendPacket(__int64 iSessionID, CNPacket *pPacket)
 			break;
 		}
 	}
+	*/
 
 	return true;
 }
@@ -201,6 +219,11 @@ bool				CLanServer::SendPacket(__int64 iSessionID, CNPacket *pPacket)
 ///////////////////////////////////////////////////////////////////////////////////////////
 bool				CLanServer::Disconnect(__int64 iSessionID)
 {
+	int iSessionIndex = GET_SESSIONINDEX(iSessionID);
+
+	DisconnectSession(&_Session[iSessionIndex]);
+
+	/*
 	for (int iCnt = 0; iCnt < eMAX_SESSION; iCnt++)
 	{
 		if (_Session[iCnt]._iSessionID == iSessionID)
@@ -209,6 +232,7 @@ bool				CLanServer::Disconnect(__int64 iSessionID)
 			break;
 		}
 	}
+	*/
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -263,10 +287,14 @@ int					CLanServer::AccpetThread_update()
 		// 빈 세션 찾아 세션 생성
 		///////////////////////////////////////////////////////////////////////////////////
 		_Session[iBlankIndex]._SessionInfo = SessionInfo;
-
-		_Session[iBlankIndex]._iSessionID = InterlockedIncrement((LONG *)&_iSessionID);
-
 		_Session[iBlankIndex]._iSessionIndex = iBlankIndex;
+
+		///////////////////////////////////////////////////////////////////////////////////
+		// 세션 ID 조합해서 만들기
+		///////////////////////////////////////////////////////////////////////////////////
+		int iSessionID = InterlockedIncrement((LONG *)&_iSessionID);
+		_Session[iBlankIndex]._iSessionID = COMBINE_ID_WITH_INDEX(iSessionID, iBlankIndex);
+
 
 		/////////////////////////////////////////////////////////////////////
 		// IOCP 등록
@@ -664,9 +692,7 @@ bool				CLanServer::CompleteSend(SESSION *pSession, DWORD dwTransferred)
 	return true;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////
-// Session Index 관련 함수
-///////////////////////////////////////////////////////////////////////////////////////////
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 // 빈 세션 얻기
 ///////////////////////////////////////////////////////////////////////////////////////////
