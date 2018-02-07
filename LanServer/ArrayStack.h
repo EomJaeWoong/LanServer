@@ -14,7 +14,7 @@ private :
 	/////////////////////////////////////////////////////////////////////
 	enum e_ARRAY_STACK
 	{
-		eSTACK_SIZE_DEFAULT =	1000		// 스택 기본 사이즈
+		eSTACK_SIZE_DEFAULT =	100000		// 스택 기본 사이즈
 	};
 
 public :
@@ -49,7 +49,7 @@ private :
 
 		_iStackSize =	iStackSize;
 		_iUseSize	=	0;
-		_iTop		=	0;
+		_iTop		=	-1;
 
 		InitializeCriticalSection(&_csStackLock);
 	}
@@ -77,7 +77,7 @@ public :
 		if (isFull())
 			return false;
 
-		_pDataArray[_iTop++] = data;
+		_pDataArray[++_iTop] = data;
 
 		_iUseSize++;
 
@@ -98,7 +98,7 @@ public :
 		if (isEmpty())
 			data = NULL;
 
-		data = _pDataArray[--_iTop];
+		data = _pDataArray[_iTop--];
 		_iUseSize--;
 
 		return data;

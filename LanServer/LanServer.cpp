@@ -5,11 +5,10 @@
 //-----------------------------------------------------------------------------------------
 CLanServer::CLanServer()
 {
-	CNPacket::_ValueSizeCheck();
 	CCrashDump::CCrashDump();
 
-	//if (!CNPacket::_ValueSizeCheck())
-	//	CCrashDump::Crash();
+	if (!CNPacket::_ValueSizeCheck())
+		CCrashDump::Crash();
 
 	_Session = new SESSION[eMAX_SESSION];
 	_pBlankStack = new CArrayStack<int>[eMAX_SESSION];
@@ -481,7 +480,8 @@ void				CLanServer::RecvPost(SESSION *pSession, bool bAcceptRecv)
 			// 10054 : 클라이언트 쪽에서 강제로 끊어진 경우
 			// 10058 : 해당 소켓이 shutdown된 경우
 			///////////////////////////////////////////////////////////////////////////////
-			if ((10053 != iErrorCode) &&
+			if ((10038 != iErrorCode) &&
+				(10053 != iErrorCode) &&
 				(10054 != iErrorCode) &&
 				(10058 != iErrorCode))
 				CCrashDump::Crash();
@@ -591,7 +591,8 @@ bool				CLanServer::SendPost(SESSION *pSession)
 				///////////////////////////////////////////////////////////////////////////////
 				// 클라이언트 쪽에서 강제로 끊어진 경우
 				///////////////////////////////////////////////////////////////////////////////
-				if ((10053 != iErrorCode) && 
+				if ((10038 != iErrorCode) &&
+					(10053 != iErrorCode) && 
 					(10054 != iErrorCode) &&
 					(10058 != iErrorCode))
 					CCrashDump::Crash();
