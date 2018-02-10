@@ -10,7 +10,6 @@ CLanServer::CLanServer()
 	if (!CNPacket::_ValueSizeCheck())
 		CCrashDump::Crash();
 
-	_Session = new SESSION[eMAX_SESSION];
 	_pBlankStack = new CArrayStack<int>[eMAX_SESSION];
 
 	///////////////////////////////////////////////////////////////////////////////
@@ -18,31 +17,30 @@ CLanServer::CLanServer()
 	///////////////////////////////////////////////////////////////////////////////
 	for (int iCnt = eMAX_SESSION - 1; iCnt >= 0; iCnt--)
 	{
+		_Session[iCnt] = new SESSION;
 		///////////////////////////////////////////////////////////////////////////
 		// 세션 정보 구조체 초기화
 		///////////////////////////////////////////////////////////////////////////
-		_Session[iCnt]._SessionInfo._Socket = INVALID_SOCKET;
-		memset(&_Session[iCnt]._SessionInfo._wIP, 0, sizeof(_Session[iCnt]._SessionInfo._wIP));
-		_Session[iCnt]._SessionInfo._iPort = 0;
+		_Session[iCnt]->_SessionInfo._Socket = INVALID_SOCKET;
+		memset(&_Session[iCnt]->_SessionInfo._wIP, 0, sizeof(_Session[iCnt]->_SessionInfo._wIP));
+		_Session[iCnt]->_SessionInfo._iPort = 0;
 
 		///////////////////////////////////////////////////////////////////////////
 		// 세션 초기화
 		///////////////////////////////////////////////////////////////////////////
-		_Session[iCnt]._iSessionID = -1;
+		_Session[iCnt]->_iSessionID = -1;
 
-		_Session[iCnt]._iSessionIndex = -1;
+		memset(&_Session[iCnt]->_SendOverlapped, 0, sizeof(OVERLAPPED));
+		memset(&_Session[iCnt]->_RecvOverlapped, 0, sizeof(OVERLAPPED));
 
-		memset(&_Session[iCnt]._SendOverlapped, 0, sizeof(OVERLAPPED));
-		memset(&_Session[iCnt]._RecvOverlapped, 0, sizeof(OVERLAPPED));
+		_Session[iCnt]->_SendQ.ClearBuffer();
+		_Session[iCnt]->_RecvQ.ClearBuffer();
 
-		_Session[iCnt]._SendQ.ClearBuffer();
-		_Session[iCnt]._RecvQ.ClearBuffer();
+		_Session[iCnt]->_bSendFlag = false;
+		_Session[iCnt]->_lIOCount = 0;
 
-		_Session[iCnt]._bSendFlag = false;
-		_Session[iCnt]._lIOCount = 0;
-
-		memset(_Session[iCnt]._pSentPacket, 0, sizeof(_Session[iCnt]._pSentPacket));
-		_Session[iCnt]._lSentPacketCnt = 0;
+		memset(_Session[iCnt]->_pSentPacket, 0, sizeof(_Session[iCnt]->_pSentPacket));
+		_Session[iCnt]->_lSentPacketCnt = 0;
 
 		InsertBlankSessionIndex(iCnt);
 	}
@@ -175,14 +173,14 @@ bool				CLanServer::SendPacket(__int64 iSessionID, CNPacket *pPacket)
 	pPacket->SetCustomShortHeader(pPacket->GetDataSize());
 	pPacket->addRef();
 
-	_Session[iSessionIndex]._SendQ.Lock();
-	int iPutSize = _Session[iSessionIndex]._SendQ.Put(
+	_Session[iSessionIndex]->_SendQ.Lock();
+	int iPutSize = _Session[iSessionIndex]->_SendQ.Put(
 		(char *)&pPacket,
 		sizeof(char *)
 		);
-	_Session[iSessionIndex]._SendQ.Unlock();
+	_Session[iSessionIndex]->_SendQ.Unlock();
 
-	SendPost(&_Session[iSessionIndex]);
+	SendPost(_Session[iSessionIndex]);
 
 	InterlockedIncrement((LONG *)&_lSendPacketCounter);
 
@@ -220,7 +218,7 @@ bool				CLanServer::Disconnect(__int64 iSessionID)
 {
 	int iSessionIndex = GET_SESSIONINDEX(iSessionID);
 
-	DisconnectSession(&_Session[iSessionIndex]);
+	DisconnectSession(_Session[iSessionIndex]);
 
 	/*
 	for (int iCnt = 0; iCnt < eMAX_SESSION; iCnt++)
@@ -272,7 +270,7 @@ int					CLanServer::AccpetThread_update()
 		///////////////////////////////////////////////////////////////////////////////////
 		if (iBlankIndex < 0)
 		{
-			shutdown(ClientSocket, SD_BOTH);
+			closesocket(ClientSocket);
 			continue;
 		}
 
@@ -285,22 +283,20 @@ int					CLanServer::AccpetThread_update()
 		///////////////////////////////////////////////////////////////////////////////////
 		// 빈 세션 찾아 세션 생성
 		///////////////////////////////////////////////////////////////////////////////////
-		_Session[iBlankIndex]._SessionInfo = SessionInfo;
-		_Session[iBlankIndex]._iSessionIndex = iBlankIndex;
+		_Session[iBlankIndex]->_SessionInfo = SessionInfo;
 
 		///////////////////////////////////////////////////////////////////////////////////
 		// 세션 ID 조합해서 만들기
 		///////////////////////////////////////////////////////////////////////////////////
 		int iSessionID = InterlockedIncrement((LONG *)&_iSessionID);
-		_Session[iBlankIndex]._iSessionID = COMBINE_ID_WITH_INDEX(iSessionID, iBlankIndex);
-
+		_Session[iBlankIndex]->_iSessionID = COMBINE_ID_WITH_INDEX(iSessionID, iBlankIndex);
 
 		/////////////////////////////////////////////////////////////////////
 		// IOCP 등록
 		/////////////////////////////////////////////////////////////////////
-		result = CreateIoCompletionPort((HANDLE)_Session[iBlankIndex]._SessionInfo._Socket,
+		result = CreateIoCompletionPort((HANDLE)_Session[iBlankIndex]->_SessionInfo._Socket,
 			_hIOCP,
-			(ULONG_PTR)&_Session[iBlankIndex],
+			(ULONG_PTR)_Session[iBlankIndex],
 			0);
 		if (!result)
 			PostQueuedCompletionStatus(_hIOCP, 0, 0, 0);
@@ -308,14 +304,16 @@ int					CLanServer::AccpetThread_update()
 		/////////////////////////////////////////////////////////////////////
 		// OnClientJoin
 		// 컨텐츠쪽에 세션이 들어왔음을 알림
+		// 로그인 패킷 보내는 중에 끊길 수 있으니 IOCount를 미리 올려준다
 		/////////////////////////////////////////////////////////////////////
-		OnClientJoin(&_Session[iBlankIndex]._SessionInfo, _Session[iBlankIndex]._iSessionID);
+		InterlockedIncrement((long *)&_Session[iBlankIndex]->_lIOCount);
+		OnClientJoin(&_Session[iBlankIndex]->_SessionInfo, _Session[iBlankIndex]->_iSessionID);
 
 		InterlockedIncrement((LONG *)&_lAcceptCounter);
 		InterlockedIncrement((LONG *)&_lAcceptTotalCounter);
 		InterlockedIncrement((LONG *)&_lSessionCount);
 
-		RecvPost(&_Session[iBlankIndex]);
+		RecvPost(_Session[iBlankIndex], true);
 	}
 
 	return 0;
@@ -374,14 +372,13 @@ int					CLanServer::WorkerThread_update()
 		}
 		//----------------------------------------------------------------------------
 
-		if (pOverlapped == &pSession->_RecvOverlapped)
+		if (pOverlapped == &(pSession->_RecvOverlapped))
 			CompleteRecv(pSession, dwTransferred);
 
-		if (pOverlapped == &pSession->_SendOverlapped)
+		if (pOverlapped == &(pSession->_SendOverlapped))
 			CompleteSend(pSession, dwTransferred);
 
-		DWORD lIOCount = InterlockedDecrement((LONG *)&pSession->_lIOCount);
-		if (0 == lIOCount)
+		if (0 == InterlockedDecrement((LONG *)&pSession->_lIOCount))
 			ReleaseSession(pSession);
 
 		OnWorkerThreadEnd();
@@ -750,7 +747,7 @@ void				CLanServer::CloseSocket(SOCKET socket)
 ///////////////////////////////////////////////////////////////////////////////////////////
 void				CLanServer::ReleaseSession(SESSION *pSession)
 {
-	//CloseSocket(pSession->_SessionInfo._Socket);
+	closesocket(pSession->_SessionInfo._Socket);
 
 	pSession->_SessionInfo._Socket = INVALID_SOCKET;
 	memset(&pSession->_SessionInfo, 0, sizeof(SESSIONINFO));
@@ -767,8 +764,10 @@ void				CLanServer::ReleaseSession(SESSION *pSession)
 
 	OnClientLeave(pSession->_iSessionID);
 
-	InsertBlankSessionIndex(pSession->_iSessionIndex);
-	pSession->_iSessionIndex = -1;
+	InsertBlankSessionIndex(GET_SESSIONINDEX(pSession->_iSessionID));
+
+	pSession->_iSessionID = -1;
+
 	InterlockedDecrement((LONG *)&_lSessionCount);
 }
 
