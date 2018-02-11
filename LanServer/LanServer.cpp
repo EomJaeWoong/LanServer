@@ -281,6 +281,23 @@ int					CLanServer::AccpetThread_update()
 			continue;
 		
 		///////////////////////////////////////////////////////////////////////////////////
+		// keepalive 옵션
+		//
+		// onoff			 -> keepalive 동작 여부(0이 아니면 동작)
+		// keepalivetime	 -> 첫 keepalive 패킷이 가기 전까지의 시간
+		// keepaliveinterval -> 응답이 없을경우 연속 keepalive 패킷이 전송되는 간격 
+		///////////////////////////////////////////////////////////////////////////////////
+		tcp_keepalive tcpkl;
+
+		tcpkl.onoff = 1;
+		tcpkl.keepalivetime = 30000;
+		tcpkl.keepaliveinterval = 2000;
+
+		DWORD dwReturnByte;
+		WSAIoctl(SessionInfo._Socket, SIO_KEEPALIVE_VALS, &tcpkl, sizeof(tcp_keepalive),
+			0, 0, &dwReturnByte, NULL, NULL);
+
+		///////////////////////////////////////////////////////////////////////////////////
 		// 빈 세션 찾아 세션 생성
 		///////////////////////////////////////////////////////////////////////////////////
 		_Session[iBlankIndex]->_SessionInfo = SessionInfo;
