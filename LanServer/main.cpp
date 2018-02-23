@@ -23,7 +23,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		wprintf(L"SendPacket TPS : %d\n", EchoServer._lSendPacketTPS);
 
 		wprintf(L"PacketPool Use : %d\n", 0);
-		wprintf(L"PacketPool Alloc : %d\n", 0);
+		wprintf(L"PacketPool Alloc : %d\n", EchoServer._lPacketPoolTPS);
 		wprintf(L"=========================================================================\n");
 
 		Sleep(999);

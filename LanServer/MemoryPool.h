@@ -68,11 +68,11 @@ public:
 		//////////////////////////////////////////////////////////////////////
 		// 초기화
 		//////////////////////////////////////////////////////////////////////
-		_iBlockCount = iBlockNum;
-		_iAllocCount = 0;
+		_lBlockCount = iBlockNum;
+		_lAllocCount = 0;
 		_bLockflag = bLockFlag;
 
-		InitializeCriticalSection(&_csMemoryPool);
+		InitializeSRWLock(&_srwMemoryPool);
 
 		//////////////////////////////////////////////////////////////////////
 		// 블록이 부족할 경우 동적 할당
@@ -133,9 +133,12 @@ public:
 	//////////////////////////////////////////////////////////////////////////
 	DATA					*Alloc(bool bPlacementNew = true)
 	{
-		st_BLOCK_NODE *pAllocNode;
+		st_BLOCK_NODE *pAllocNode = nullptr;
+		DATA *pData;
 
-		if (_iAllocCount == _iBlockCount)
+		_lAllocCount++;
+	
+		if (_lBlockCount < _lAllocCount)
 		{
 			//////////////////////////////////////////////////////////////////
 			// 할당인 경우
@@ -143,10 +146,10 @@ public:
 			if (_bDynamicflag)
 			{
 				pAllocNode = (st_BLOCK_NODE *)malloc(sizeof(st_BLOCK_NODE) + sizeof(DATA));
-				_iBlockCount++;
+				_lBlockCount++;
 			}
 
-			else				return nullptr;
+			else				pData = nullptr;
 		}
 
 		else
@@ -155,10 +158,10 @@ public:
 			_pTopNode = _pTopNode->stpNextBlock;
 		}
 
-		DATA *pData = (DATA *)(pAllocNode + 1);
+		pData = (DATA *)(pAllocNode + 1);
 
-		_iAllocCount++;
-
+		if (bPlacementNew)
+			new (pData)DATA;
 
 		return pData;
 	}
@@ -176,7 +179,7 @@ public:
 		pReturnNode->stpNextBlock = _pTopNode;
 		_pTopNode = pReturnNode;
 
-		_iAllocCount--;
+		_lAllocCount--;
 
 		return true;
 	}
@@ -188,41 +191,31 @@ public:
 	// Parameters: 없음.
 	// Return: (int) 사용중인 블럭 개수.
 	//////////////////////////////////////////////////////////////////////////
-	int						GetAllocCount(void) { return _iAllocCount; }
+	int						GetAllocCount(void) { return (int)_lAllocCount; }
 
 
 	//////////////////////////////////////////////////////////////////////////
-	// 전체 블럭 개수를 얻는다.
-	//
-	// Parameters: 없음.
-	// Return: (int) 전체 블럭 개수.
-	//////////////////////////////////////////////////////////////////////////
-	int						GetBlockCount(void) { return _iBlockCount; }
-
-
-	//////////////////////////////////////////////////////////////////////////
-	// 메모리 풀 락
+	// 메모리풀 락
 	//
 	// Parameters: 없음.
 	// Return: 없음.
 	//////////////////////////////////////////////////////////////////////////
 	void					Lock()
 	{
-		EnterCriticalSection(&_csMemoryPool);
+		AcquireSRWLockExclusive(&_srwMemoryPool);
 	}
 
+
 	//////////////////////////////////////////////////////////////////////////
-	// 메모리 풀 언락
+	// 메모리풀 언락
 	//
 	// Parameters: 없음.
 	// Return: 없음.
 	//////////////////////////////////////////////////////////////////////////
 	void					Unlock()
 	{
-		LeaveCriticalSection(&_csMemoryPool);
+		ReleaseSRWLockExclusive(&_srwMemoryPool);
 	}
-
-
 
 private:
 	//////////////////////////////////////////////////////////////////////////
@@ -246,19 +239,19 @@ private:
 	//////////////////////////////////////////////////////////////////////////
 	// 현재 할당중인 블록 수
 	//////////////////////////////////////////////////////////////////////////
-	int						_iAllocCount;
+	long					_lAllocCount;
 
 
 	//////////////////////////////////////////////////////////////////////////
 	// 전체 블록 수
 	//////////////////////////////////////////////////////////////////////////
-	int						_iBlockCount;
+	long					_lBlockCount;
 
 
 	//////////////////////////////////////////////////////////////////////////
 	// 동기화 객체
 	//////////////////////////////////////////////////////////////////////////
-	CRITICAL_SECTION		_csMemoryPool;
+	SRWLOCK					_srwMemoryPool;
 };
 
 

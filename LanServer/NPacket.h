@@ -356,7 +356,12 @@ public:
 	//////////////////////////////////////////////////////////////////////////
 	static CNPacket *Alloc()
 	{
-		CNPacket *pAllocPacket = new CNPacket;
+		m_PacketPool.Lock();
+		CNPacket *pAllocPacket = m_PacketPool.Alloc();
+		m_PacketPool.Unlock();
+
+		if (NULL == pAllocPacket)
+			CCrashDump::Crash();
 
 		pAllocPacket->addRef();
 		pAllocPacket->Clear();
@@ -378,8 +383,15 @@ public:
 
 		if (0 == result)
 		{
-			delete this;
+			this->~CNPacket();
+
+			m_PacketPool.Lock();
+			m_PacketPool.Free(this);
+			m_PacketPool.Unlock();
 		}
+
+		else if(0 > result)
+			CCrashDump::Crash();
 	}
 
 
@@ -395,6 +407,10 @@ public:
 	}
 
 
+	static long GetPacketCount()
+	{
+		return m_PacketPool.GetAllocCount();
+	}
 
 
 	/* ============================================================================= */
@@ -627,44 +643,44 @@ protected:
 	//------------------------------------------------------------
 	// 패킷버퍼 / 버퍼 사이즈.
 	//------------------------------------------------------------
-	unsigned char				*m_chpBufferExpansion;
+	unsigned char					*m_chpBufferExpansion;
 
-	unsigned char				*m_chpBuffer;
-	int							m_iBufferSize;
+	unsigned char					*m_chpBuffer;
+	int								m_iBufferSize;
 	//------------------------------------------------------------
 	// 패킷버퍼 시작 위치.	(본 클래스 에서는 사용하지 않지만, 확장성을 위해 사용)
 	//------------------------------------------------------------
-	unsigned char				*m_chpDataFieldStart;
-	unsigned char				*m_chpDataFieldEnd;
+	unsigned char					*m_chpDataFieldStart;
+	unsigned char					*m_chpDataFieldEnd;
 
 
 	//------------------------------------------------------------
 	// 버퍼의 읽을 위치, 넣을 위치.
 	//------------------------------------------------------------
-	mutable unsigned char		*m_chpReadPos;
-	mutable unsigned char		*m_chpWritePos;
+	mutable unsigned char			*m_chpReadPos;
+	mutable unsigned char			*m_chpWritePos;
 
 
 	//------------------------------------------------------------
 	// 현재 버퍼에 사용중인 사이즈.
 	//------------------------------------------------------------
-	mutable int					m_iDataSize;
+	mutable int						m_iDataSize;
 
 
 	//------------------------------------------------------------
 	// 헤더 셋팅 플래그
 	//------------------------------------------------------------
-	bool						m_bHeaderExist;
+	bool							m_bHeaderExist;
 
 	//------------------------------------------------------------
 	// 할당 카운터
 	//------------------------------------------------------------
-	long						m_lRefCnt;
+	long							m_lRefCnt;
 
 	//------------------------------------------------------------
 	// 패킷 메모리 풀
 	//------------------------------------------------------------
+	static CMemoryPool<CNPacket>	m_PacketPool;
 };
-
 
 #endif
