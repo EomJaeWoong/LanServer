@@ -9,7 +9,7 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	char chControlKey;
 
-	EchoServer.Start(L"127.0.0.1", 6000, 2, false, 100);
+	EchoServer.Start(L"127.0.0.1", 6000, 10, false, 100);
 
 	while (1)
 	{
@@ -24,6 +24,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 		wprintf(L"PacketPool Use : %d\n", 0);
 		wprintf(L"PacketPool Alloc : %d\n", EchoServer._lPacketPoolTPS);
+		wprintf(L"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 		wprintf(L"=========================================================================\n");
 
 		Sleep(999);

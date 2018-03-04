@@ -1,11 +1,8 @@
-﻿빌드 시작: 2018-02-19 오전 10:16:09
+﻿빌드 시작: 2018-03-05 오전 1:59:47
      1>2 노드의 "C:\Users\EomJaeWoong\Documents\Visual Studio 2013\Projects\LanServer\LanServer\LanServer.vcxproj" 프로젝트(Build 대상)입니다.
      1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /Zi /nologo /W3 /WX- /sdl /Od /Oi /GL /D WIN32 /D NDEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm- /EHsc /MT /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Yu"stdafx.h" /Fp"x64\Release\LanServer.pch" /Fo"x64\Release\\" /Fd"x64\Release\vc120.pdb" /Gd /TP /errorReport:prompt LanServer.cpp
-         LanServer.cpp
-     1>LanServer.cpp(513): warning C4800: 'LONG' : 'true' 또는 'false'로 bool 값을 강제하고 있습니다(성능 경고).
-     1>LanServer.cpp(520): warning C4244: '초기화 중' : '__int64'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-     1>LanServer.cpp(521): warning C4244: '초기화 중' : '__int64'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /Zi /nologo /W3 /WX- /sdl /Od /Oi /GL /D WIN32 /D NDEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm- /EHsc /MT /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Yu"stdafx.h" /Fp"x64\Release\LanServer.pch" /Fo"x64\Release\\" /Fd"x64\Release\vc120.pdb" /Gd /TP /errorReport:prompt main.cpp
+         main.cpp
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\EomJaeWoong\Documents\Visual Studio 2013\Projects\LanServer\x64\Release\LanServer.exe" /INCREMENTAL:NO /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\EomJaeWoong\Documents\Visual Studio 2013\Projects\LanServer\x64\Release\LanServer.pdb" /SUBSYSTEM:CONSOLE /OPT:REF /OPT:ICF /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\EomJaeWoong\Documents\Visual Studio 2013\Projects\LanServer\x64\Release\LanServer.lib" /MACHINE:X64 x64\Release\APIHook.obj
          x64\Release\CrashDump.obj
@@ -21,4 +18,4 @@
 
 빌드했습니다.
 
-경과 시간: 00:00:11.69
+경과 시간: 00:00:05.01

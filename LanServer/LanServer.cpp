@@ -63,7 +63,9 @@ CLanServer::~CLanServer()
 //-----------------------------------------------------------------------------------------
 bool				CLanServer::Start(WCHAR* wOpenIP, int iPort, int iWorkerThreadNum, bool bNagle, int iMaxConnect)
 {
-	int result;
+	int				result;
+	unsigned long	ul = 1;
+
 
 	///////////////////////////////////////////////////////////////////////////////////////
 	// 윈속 초기화
@@ -94,6 +96,14 @@ bool				CLanServer::Start(WCHAR* wOpenIP, int iPort, int iWorkerThreadNum, bool 
 	serverAddr.sin_port = htons(iPort);
 	InetPton(AF_INET, wOpenIP, &serverAddr.sin_addr);
 	result = bind(_ListenSocket, (SOCKADDR *)&serverAddr, sizeof(SOCKADDR_IN));
+	if (SOCKET_ERROR == result)
+		return false;
+
+	///////////////////////////////////////////////////////////////////////////////////
+	// non-block 소켓 전환
+	// SOCKET_ERROR는 논블록 소켓으로 전환이 실패함
+	///////////////////////////////////////////////////////////////////////////////////
+	result = ioctlsocket(_ListenSocket, FIONBIO, (unsigned long *)&ul);
 	if (SOCKET_ERROR == result)
 		return false;
 
@@ -202,17 +212,6 @@ bool				CLanServer::Disconnect(__int64 iSessionID)
 	int iSessionIndex = GET_SESSIONINDEX(iSessionID);
 
 	DisconnectSession(_Session[iSessionIndex]);
-
-	/*
-	for (int iCnt = 0; iCnt < eMAX_SESSION; iCnt++)
-	{
-		if (_Session[iCnt]._iSessionID == iSessionID)
-		{
-			DisconnectSession(&_Session[iCnt]);
-			break;
-		}
-	}
-	*/
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -220,24 +219,41 @@ bool				CLanServer::Disconnect(__int64 iSessionID)
 ///////////////////////////////////////////////////////////////////////////////////////////
 int					CLanServer::AccpetThread_update()
 {
-	HANDLE			result;
+	HANDLE			hResult;
 
 	SOCKET			ClientSocket;
 	SOCKADDR_IN		ClientAddr;
 	int				iAddrLen = sizeof(SOCKADDR_IN);
+	
 
 	SESSIONINFO		SessionInfo;
 
 	int				iBlankIndex;
 
+
 	while (1)
 	{
+		///////////////////////////////////////////////////////////////////////////////////
+		// accpet
+		///////////////////////////////////////////////////////////////////////////////////
 		ClientSocket = accept(_ListenSocket, (SOCKADDR *)&ClientAddr, &iAddrLen);
 		if (INVALID_SOCKET == ClientSocket)
 		{
 			int iErrorCode = WSAGetLastError();
-			return -1;
+			if (iErrorCode == WSAEWOULDBLOCK)
+				continue;
+
+			CCrashDump::Crash();
 		}
+
+		///////////////////////////////////////////////////////////////////////////////////
+		// accpet 받은 소켓은 block 소켓으로 다시 전환
+		///////////////////////////////////////////////////////////////////////////////////
+		unsigned long	ul = 0;
+		if (SOCKET_ERROR == ioctlsocket(ClientSocket, FIONBIO, (unsigned long *)&ul))
+			CCrashDump::Crash();
+
+
 
 		InterlockedIncrement((LONG *)&_lAcceptCounter);
 		InterlockedIncrement((LONG *)&_lAcceptTotalCounter);
@@ -306,11 +322,11 @@ int					CLanServer::AccpetThread_update()
 		/////////////////////////////////////////////////////////////////////
 		// IOCP 등록
 		/////////////////////////////////////////////////////////////////////
-		result = CreateIoCompletionPort((HANDLE)_Session[iBlankIndex]->_SessionInfo._Socket,
+		hResult = CreateIoCompletionPort((HANDLE)_Session[iBlankIndex]->_SessionInfo._Socket,
 			_hIOCP,
 			(ULONG_PTR)_Session[iBlankIndex],
 			0);
-		if (!result)
+		if (!hResult)
 			PostQueuedCompletionStatus(_hIOCP, 0, 0, 0);
 
 		/////////////////////////////////////////////////////////////////////
