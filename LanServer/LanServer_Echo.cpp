@@ -12,14 +12,20 @@ void CLanServerEcho::OnClientJoin(SESSIONINFO *pSessionInfo, __int64 iSessionID)
 	////////////////////////////////////////////////////////////////////////////
 	// Login Packet 보내기
 	////////////////////////////////////////////////////////////////////////////
+	PRO_BEGIN(L"LoginPacket Alloc");
 	CNPacket *pLoginPacket = CNPacket::Alloc();
+	PRO_END(L"LoginPacket Alloc");
 
 	*pLoginPacket << 0x7fffffffffffffff;
 	pLoginPacket->SetCustomShortHeader(pLoginPacket->GetDataSize());
 
+	PRO_BEGIN(L"SendPacket");
 	SendPacket(iSessionID, pLoginPacket);
+	PRO_END(L"SendPacket");
 
+	PRO_BEGIN(L"LoginPacket Free");
 	pLoginPacket->Free();
+	PRO_END(L"LoginPacket Free");
 }
 
 void CLanServerEcho::OnClientLeave(__int64 ClientID)   					// Disconnect 후 호출

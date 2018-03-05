@@ -51,6 +51,9 @@
     <ClInclude Include="MemoryPool.h">
       <Filter>소스 파일</Filter>
     </ClInclude>
+    <ClInclude Include="ProFiler.h">
+      <Filter>소스 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -72,6 +75,9 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="NPacket.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Profiler.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,8 +1,9 @@
-﻿빌드 시작: 2018-03-05 오전 1:59:47
+﻿빌드 시작: 2018-03-06 오전 4:27:13
      1>2 노드의 "C:\Users\EomJaeWoong\Documents\Visual Studio 2013\Projects\LanServer\LanServer\LanServer.vcxproj" 프로젝트(Build 대상)입니다.
      1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /Zi /nologo /W3 /WX- /sdl /Od /Oi /GL /D WIN32 /D NDEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm- /EHsc /MT /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Yu"stdafx.h" /Fp"x64\Release\LanServer.pch" /Fo"x64\Release\\" /Fd"x64\Release\vc120.pdb" /Gd /TP /errorReport:prompt main.cpp
-         main.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /Zi /nologo /W3 /WX- /sdl /Od /Oi /GL /D WIN32 /D NDEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm- /EHsc /MT /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Yu"stdafx.h" /Fp"x64\Release\LanServer.pch" /Fo"x64\Release\\" /Fd"x64\Release\vc120.pdb" /Gd /TP /errorReport:prompt Profiler.cpp
+         Profiler.cpp
+     1>Profiler.cpp(289): warning C4267: '인수' : 'size_t'에서 'DWORD'(으)로 변환하면서 데이터가 손실될 수 있습니다.
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\EomJaeWoong\Documents\Visual Studio 2013\Projects\LanServer\x64\Release\LanServer.exe" /INCREMENTAL:NO /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\EomJaeWoong\Documents\Visual Studio 2013\Projects\LanServer\x64\Release\LanServer.pdb" /SUBSYSTEM:CONSOLE /OPT:REF /OPT:ICF /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\EomJaeWoong\Documents\Visual Studio 2013\Projects\LanServer\x64\Release\LanServer.lib" /MACHINE:X64 x64\Release\APIHook.obj
          x64\Release\CrashDump.obj
@@ -10,12 +11,15 @@
          x64\Release\LanServer_Echo.obj
          x64\Release\main.obj
          x64\Release\NPacket.obj
+         x64\Release\Profiler.obj
          x64\Release\stdafx.obj
          코드를 생성하고 있습니다.
+     1>c:\users\eomjaewoong\documents\visual studio 2013\projects\lanserver\lanserver\profiler.cpp(44): warning C4715: 'ProfileInit' : 모든 제어 경로에서 값을 반환하지는 않습니다.
+     1>c:\users\eomjaewoong\documents\visual studio 2013\projects\lanserver\lanserver\profiler.cpp(75): warning C4715: 'ProfileBegin' : 모든 제어 경로에서 값을 반환하지는 않습니다.
          코드를 생성했습니다.
          LanServer.vcxproj -> C:\Users\EomJaeWoong\Documents\Visual Studio 2013\Projects\LanServer\x64\Release\LanServer.exe
      1>"C:\Users\EomJaeWoong\Documents\Visual Studio 2013\Projects\LanServer\LanServer\LanServer.vcxproj" 프로젝트를 빌드했습니다(Build 대상).
 
 빌드했습니다.
 
-경과 시간: 00:00:05.01
+경과 시간: 00:00:02.96

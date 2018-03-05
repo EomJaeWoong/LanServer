@@ -16,6 +16,7 @@
 #include <strsafe.h>
 #include <mmsystem.h>
 #include <conio.h>
+#include <float.h>
 
 #include <psapi.h>
 #include <dbghelp.h>
@@ -29,9 +30,12 @@
 #pragma comment(lib, "ImageHlp")
 #pragma comment(lib, "psapi")
 
+#define		PROFILE_CHECK
+
 // TODO: 프로그램에 필요한 추가 헤더는 여기에서 참조합니다.
 #include "APIHook.h"
 #include "CrashDump.h"
+#include "ProFiler.h"
 #include "MemoryPool.h"
 #include "AyaStreamSQ.h"
 #include "NPacket.h"

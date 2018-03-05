@@ -151,6 +151,7 @@
     <ClInclude Include="LanServer_Echo.h" />
     <ClInclude Include="MemoryPool.h" />
     <ClInclude Include="NPacket.h" />
+    <ClInclude Include="ProFiler.h" />
     <ClInclude Include="Session.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -162,6 +163,7 @@
     <ClCompile Include="LanServer_Echo.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NPacket.cpp" />
+    <ClCompile Include="Profiler.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

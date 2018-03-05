@@ -31,36 +31,40 @@ int _tmain(int argc, _TCHAR* argv[])
 
 		if (_kbhit() != 0){
 			chControlKey = _getch();
-			if (chControlKey == 'q' || chControlKey == 'Q')
+
+			switch (chControlKey)
 			{
+			case 'x' :
+			case 'X' :
 				//------------------------------------------------
 				// 辆丰贸府
 				//------------------------------------------------
 				break;
-			}
 
-			else if (chControlKey == 'G' || chControlKey == 'g')
-			{
+			case 'g' :
+			case 'G' :
 				//------------------------------------------------
 				// 矫累贸府
 				//------------------------------------------------
 				EchoServer.Start(L"127.0.0.1", 5000, 1, false, 100);
-			}
+				break;
 
-			else if (chControlKey == 'S' || chControlKey == 's')
-			{
+			case 's' :
+			case 'S' :
 				//------------------------------------------------
 				// 沥瘤贸府
 				//------------------------------------------------
 				EchoServer.Stop();
-			}
+				break;
 
-			/*
-			else if (chControlKey == 'P' || chControlKey == 'p')
-			{
-			SaveProfile();
+			case 'p' :
+			case 'P' :
+				SaveProfile();
+				break;
+
+			default :
+				break;
 			}
-			*/
 		}
 	}
 

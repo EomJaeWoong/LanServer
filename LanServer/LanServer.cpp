@@ -6,6 +6,7 @@
 CLanServer::CLanServer()
 {
 	CCrashDump::CCrashDump();
+	ProfileInit();
 
 	if (!CNPacket::_ValueSizeCheck())
 		CCrashDump::Crash();
@@ -187,16 +188,23 @@ bool				CLanServer::SendPacket(__int64 iSessionID, CNPacket *pPacket)
 	int iSessionIndex = GET_SESSIONINDEX(iSessionID);
 	
 	pPacket->SetCustomShortHeader(pPacket->GetDataSize());
-	pPacket->addRef();
 
+	PRO_BEGIN(L"Packet addref");
+	pPacket->addRef();
+	PRO_END(L"Packet addref");
+
+	PRO_BEGIN(L"PacketQueue Put");
 	_Session[iSessionIndex]->_SendQ.Lock();
 	int iPutSize = _Session[iSessionIndex]->_SendQ.Put(
 		(char *)&pPacket,
 		sizeof(char *)
 		);
 	_Session[iSessionIndex]->_SendQ.Unlock();
+	PRO_END(L"PacketQueue Put");
 
+	PRO_BEGIN(L"SendPost");
 	SendPost(_Session[iSessionIndex]);
+	PRO_END(L"SendPost");
 
 	InterlockedIncrement((LONG *)&_lSendPacketCounter);
 
@@ -339,7 +347,9 @@ int					CLanServer::AccpetThread_update()
 
 		InterlockedIncrement((LONG *)&_lSessionCount);
 
+		PRO_BEGIN(L"RecvPost - AccpetTH");
 		RecvPost(_Session[iBlankIndex], true);
+		PRO_END(L"RecvPost - AccpetTH");
 	}
 
 	return 0;
@@ -359,12 +369,14 @@ int					CLanServer::WorkerThread_update()
 		pSession		= NULL;
 		dwTransferred	= 0;
 
+		PRO_BEGIN(L"GQCS IOComplete");
 		result = GetQueuedCompletionStatus(
 			_hIOCP,
 			&dwTransferred,
 			(PULONG_PTR)&pSession,
 			&pOverlapped,
 			INFINITE);
+		PRO_END(L"GQCS IOComplete");
 
 		OnWorkerThreadBegin();
 
@@ -399,10 +411,18 @@ int					CLanServer::WorkerThread_update()
 		//----------------------------------------------------------------------------
 
 		if (pOverlapped == &(pSession->_RecvOverlapped))
+		{
+			PRO_BEGIN(L"CompleteRecv");
 			CompleteRecv(pSession, dwTransferred);
+			PRO_END(L"CompleteRecv");
+		}
 
 		if (pOverlapped == &(pSession->_SendOverlapped))
+		{
+			PRO_BEGIN(L"CompleteSend");
 			CompleteSend(pSession, dwTransferred);
+			PRO_END(L"CompleteSend");
+		}
 
 		if (0 == InterlockedDecrement((LONG *)&pSession->_lIOCount))
 			ReleaseSession(pSession);
@@ -480,6 +500,7 @@ void				CLanServer::RecvPost(SESSION *pSession, bool bAcceptRecv)
 	if (!bAcceptRecv)
 		InterlockedIncrement((LONG *)&pSession->_lIOCount);
 
+	PRO_BEGIN(L"WSARecv");
 	result = WSARecv(
 		pSession->_SessionInfo._Socket, 
 		wBuf,
@@ -513,6 +534,7 @@ void				CLanServer::RecvPost(SESSION *pSession, bool bAcceptRecv)
 				ReleaseSession(pSession);
 		}
 	}
+	PRO_END(L"WSARecv");
 }
 
 bool				CLanServer::SendPost(SESSION *pSession)
@@ -591,6 +613,7 @@ bool				CLanServer::SendPost(SESSION *pSession)
 
 		InterlockedIncrement((LONG *)&pSession->_lIOCount);
 
+		PRO_BEGIN(L"WSASend");
 		result = WSASend(
 			pSession->_SessionInfo._Socket,
 			wBuf,
@@ -626,6 +649,8 @@ bool				CLanServer::SendPost(SESSION *pSession)
 					ReleaseSession(pSession);
 			}
 		}
+		PRO_END(L"WSASend");
+
 	} while (0);
 
 	return true;
@@ -646,8 +671,11 @@ bool				CLanServer::CompleteRecv(SESSION *pSession, DWORD dwTransferred)
 	if (dwTransferred != pSession->_RecvQ.MoveWritePos(dwTransferred))
 		CCrashDump::Crash();
 
+	PRO_BEGIN(L"Packet Alloc");
 	CNPacket *pPacket = CNPacket::Alloc();
+	PRO_END(L"Packet Alloc");
 
+	PRO_BEGIN(L"Recv BufferDeque");
 	while (pSession->_RecvQ.GetUseSize() > 0)
 	{
 		//////////////////////////////////////////////////////////////////////////
@@ -677,10 +705,15 @@ bool				CLanServer::CompleteRecv(SESSION *pSession, DWORD dwTransferred)
 
 		InterlockedIncrement((LONG *)&_lRecvPacketCounter);
 	}
+	PRO_END(L"Recv BufferDeque");
 
+	PRO_BEGIN(L"Packet Free");
 	pPacket->Free();
+	PRO_END(L"Packet Free");
 
+	PRO_BEGIN(L"RecvPost");
 	RecvPost(pSession);
+	PRO_END(L"RecvPost");
 
 	return true;
 }
@@ -693,6 +726,7 @@ bool				CLanServer::CompleteSend(SESSION *pSession, DWORD dwTransferred)
 	//////////////////////////////////////////////////////////////////////////////
 	// 보내기 완료된 데이터 제거
 	//////////////////////////////////////////////////////////////////////////////
+	PRO_BEGIN(L"SentPacket Remove");
 	for (iSentCnt = 0; iSentCnt < pSession->_lSentPacketCnt; iSentCnt++)
 	{
 		pPacket = (CNPacket *)pSession->_pSentPacket[iSentCnt];
@@ -701,6 +735,7 @@ bool				CLanServer::CompleteSend(SESSION *pSession, DWORD dwTransferred)
 	}
 
 	pSession->_lSentPacketCnt -= iSentCnt;
+	PRO_END(L"SentPacket Remove");
 
 	//////////////////////////////////////////////////////////////////////////////
 	// 다 보냈다고 Flag 변환
@@ -708,12 +743,14 @@ bool				CLanServer::CompleteSend(SESSION *pSession, DWORD dwTransferred)
 	if (false == InterlockedCompareExchange((long *)&pSession->_bSendFlag, false, true))
 		CCrashDump::Crash();
 
+	PRO_BEGIN(L"SendPost - WorkerTh");
 	pSession->_SendQ.Lock();
 	//////////////////////////////////////////////////////////////////////////////
 	// 보낼게 남아있으면 다시 등록
 	//////////////////////////////////////////////////////////////////////////////
 	SendPost(pSession);
 	pSession->_SendQ.Unlock();
+	PRO_END(L"SendPost - WorkerTh");
 
 	return true;
 }
