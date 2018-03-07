@@ -37,6 +37,8 @@
 #include "CrashDump.h"
 #include "ProFiler.h"
 #include "MemoryPool.h"
+#include "LockfreeStack.h"
+#include "LockfreeQueue.h"
 #include "AyaStreamSQ.h"
 #include "NPacket.h"
 #include "ArrayStack.h"

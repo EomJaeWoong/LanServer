@@ -48,10 +48,16 @@
     <ClInclude Include="ArrayStack.h">
       <Filter>소스 파일</Filter>
     </ClInclude>
+    <ClInclude Include="ProFiler.h">
+      <Filter>소스 파일</Filter>
+    </ClInclude>
     <ClInclude Include="MemoryPool.h">
       <Filter>소스 파일</Filter>
     </ClInclude>
-    <ClInclude Include="ProFiler.h">
+    <ClInclude Include="LockfreeQueue.h">
+      <Filter>소스 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="LockfreeStack.h">
       <Filter>소스 파일</Filter>
     </ClInclude>
   </ItemGroup>

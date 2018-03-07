@@ -11,7 +11,7 @@ CLanServer::CLanServer()
 	if (!CNPacket::_ValueSizeCheck())
 		CCrashDump::Crash();
 
-	_pBlankStack = new CArrayStack<int>[eMAX_SESSION];
+	_pBlankStack = new CLockfreeStack<int>();
 
 	///////////////////////////////////////////////////////////////////////////////
 	// 빈 세션 생성
@@ -34,8 +34,8 @@ CLanServer::CLanServer()
 		memset(&_Session[iCnt]->_SendOverlapped, 0, sizeof(OVERLAPPED));
 		memset(&_Session[iCnt]->_RecvOverlapped, 0, sizeof(OVERLAPPED));
 
-		_Session[iCnt]->_SendQ.ClearBuffer();
 		_Session[iCnt]->_RecvQ.ClearBuffer();
+		_Session[iCnt]->_SendQ.ClearBuffer();
 
 		_Session[iCnt]->_bSendFlag = false;
 		_Session[iCnt]->_lIOCount = 0;
@@ -194,12 +194,9 @@ bool				CLanServer::SendPacket(__int64 iSessionID, CNPacket *pPacket)
 	PRO_END(L"Packet addref");
 
 	PRO_BEGIN(L"PacketQueue Put");
-	_Session[iSessionIndex]->_SendQ.Lock();
-	int iPutSize = _Session[iSessionIndex]->_SendQ.Put(
-		(char *)&pPacket,
-		sizeof(char *)
-		);
-	_Session[iSessionIndex]->_SendQ.Unlock();
+	//[iSessionIndex]->_SendQ.Lock();
+	_Session[iSessionIndex]->_SendQ.Put(pPacket);
+	//_Session[iSessionIndex]->_SendQ.Unlock();
 	PRO_END(L"PacketQueue Put");
 
 	PRO_BEGIN(L"SendPost");
@@ -554,8 +551,10 @@ bool				CLanServer::SendPost(SESSION *pSession)
 
 		///////////////////////////////////////////////////////////////////////////////////
 		// SendQ 사이즈 측정
-		///////////////////////////////////////////////////////////////////////////////////
-		int iSendQWritePos = pSession->_SendQ.GetWriteBufferPtr() - pSession->_SendQ.GetBufferPtr();
+		
+		int iSendQUseSize = pSession->_SendQ.GetUseSize();
+		/*
+		int iSendQWritePos = pSession->_SendQ->GetWriteBufferPtr() - pSession->_SendQ.GetBufferPtr();
 		int iSendQReadPos = pSession->_SendQ.GetReadBufferPtr() - pSession->_SendQ.GetBufferPtr();
 		int iSendQUseSize = 0;
 
@@ -565,8 +564,7 @@ bool				CLanServer::SendPost(SESSION *pSession)
 			iSendQUseSize = (pSession->_SendQ.GetBufferSize() - iSendQReadPos) + iSendQWritePos;
 
 		int iPacketSize = sizeof(char *);
-
-		iSendQUseSize /= iPacketSize;
+		*/
 
 		///////////////////////////////////////////////////////////////////////////////////
 		// SendQ사이즈 다시 확인
@@ -594,10 +592,8 @@ bool				CLanServer::SendPost(SESSION *pSession)
 		for (iCount = 0; iCount < iSendQUseSize; iCount++)
 		{
 			pPacket = nullptr;
-			int iGetSize = pSession->_SendQ.Get((char *)&pPacket, iPacketSize);
-			if (iPacketSize != iGetSize)
-				CCrashDump::Crash();
-			
+			int iGetSize = pSession->_SendQ.Get(&pPacket);
+
 			wBuf[iCount].buf = (char *)pPacket->GetBufferHeaderPtr();
 			wBuf[iCount].len = pPacket->GetDataSize();
 			
@@ -744,12 +740,12 @@ bool				CLanServer::CompleteSend(SESSION *pSession, DWORD dwTransferred)
 		CCrashDump::Crash();
 
 	PRO_BEGIN(L"SendPost - WorkerTh");
-	pSession->_SendQ.Lock();
+	//pSession->_SendQ.Lock();
 	//////////////////////////////////////////////////////////////////////////////
 	// 보낼게 남아있으면 다시 등록
 	//////////////////////////////////////////////////////////////////////////////
 	SendPost(pSession);
-	pSession->_SendQ.Unlock();
+	//->_SendQ.Unlock();
 	PRO_END(L"SendPost - WorkerTh");
 
 	return true;
@@ -763,14 +759,10 @@ int					CLanServer::GetBlankSessionIndex()
 {
 	int iBlankIndex;
 
-	_pBlankStack->Lock();
-
 	if (_pBlankStack->isEmpty())
 		iBlankIndex = -1;
 	else
-		iBlankIndex = _pBlankStack->Pop();
-
-	_pBlankStack->Unlock();
+		_pBlankStack->Pop(&iBlankIndex);
 
 	return iBlankIndex;
 }
@@ -780,14 +772,7 @@ int					CLanServer::GetBlankSessionIndex()
 ///////////////////////////////////////////////////////////////////////////////////////////
 void				CLanServer::InsertBlankSessionIndex(int iSessionIndex)
 {
-	_pBlankStack->Lock();
-
-	if (_pBlankStack->isFull())
-		CCrashDump::Crash();
-	else
-		_pBlankStack->Push(iSessionIndex);
-
-	_pBlankStack->Unlock();
+	_pBlankStack->Push(iSessionIndex);
 }
 
 
@@ -824,6 +809,7 @@ void				CLanServer::ReleaseSession(SESSION *pSession)
 
 	pSession->_RecvQ.ClearBuffer();
 	pSession->_SendQ.ClearBuffer();
+
 
 	memset(&pSession->_RecvOverlapped, 0, sizeof(OVERLAPPED));
 	memset(&pSession->_SendOverlapped, 0, sizeof(OVERLAPPED));

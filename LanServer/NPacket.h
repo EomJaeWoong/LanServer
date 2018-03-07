@@ -356,9 +356,7 @@ public:
 	//////////////////////////////////////////////////////////////////////////
 	static CNPacket *Alloc()
 	{
-		m_PacketPool.Lock();
 		CNPacket *pAllocPacket = m_PacketPool.Alloc();
-		m_PacketPool.Unlock();
 
 		if (NULL == pAllocPacket)
 			CCrashDump::Crash();
@@ -385,9 +383,7 @@ public:
 		{
 			this->~CNPacket();
 
-			m_PacketPool.Lock();
 			m_PacketPool.Free(this);
-			m_PacketPool.Unlock();
 		}
 
 		else if(0 > result)

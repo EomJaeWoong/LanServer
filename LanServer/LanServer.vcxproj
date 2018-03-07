@@ -149,6 +149,8 @@
     <ClInclude Include="CrashDump.h" />
     <ClInclude Include="LanServer.h" />
     <ClInclude Include="LanServer_Echo.h" />
+    <ClInclude Include="LockfreeQueue.h" />
+    <ClInclude Include="LockfreeStack.h" />
     <ClInclude Include="MemoryPool.h" />
     <ClInclude Include="NPacket.h" />
     <ClInclude Include="ProFiler.h" />
