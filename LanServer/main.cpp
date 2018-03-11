@@ -27,8 +27,6 @@ int _tmain(int argc, _TCHAR* argv[])
 		wprintf(L"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 		wprintf(L"=========================================================================\n");
 
-		Sleep(999);
-
 		if (_kbhit() != 0){
 			chControlKey = _getch();
 
@@ -66,6 +64,8 @@ int _tmain(int argc, _TCHAR* argv[])
 				break;
 			}
 		}
+
+		Sleep(999);
 	}
 
 

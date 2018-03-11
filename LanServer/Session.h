@@ -6,11 +6,22 @@
 //--------------------------------------------------------------------------------
 typedef struct stSessionInfo
 {
-	SOCKET				_Socket;
-	WCHAR				_wIP[16];
-	int					_iPort;
+	SOCKET						_Socket;
+	WCHAR						_wIP[16];
+	int							_iPort;
 } SESSIONINFO;
 
+//--------------------------------------------------------------------------------
+// 세션 동기화를 위한 구조체
+// 
+// IOCount		- 작업 카운트
+// ReleaseFlag	- 릴리즈 작업 유무 플래그
+//--------------------------------------------------------------------------------
+typedef struct stIOBlock
+{
+	LONG64						_iIOCount;
+	LONG64						_iReleaseFlag;
+} IOBlock;
 
 //--------------------------------------------------------------------------------
 // Session 정의
@@ -40,9 +51,9 @@ typedef struct stSession
 	CLockfreeQueue<CNPacket *>	_SendQ;
 
 	/////////////////////////////////////////////
-	// 작업 카운트
+	// 세션 동기화 구조체
 	/////////////////////////////////////////////
-	long						_lIOCount;
+	IOBlock						*_IOBlock;
 
 	/////////////////////////////////////////////
 	// Send에 대한 Flag
@@ -52,7 +63,7 @@ typedef struct stSession
 	/////////////////////////////////////////////
 	// Send중인 Packet 보관
 	/////////////////////////////////////////////
-	char *						_pSentPacket[200];
+	char *						_pSentPacket[300];
 	long						_lSentPacketCnt;
 
 } SESSION;

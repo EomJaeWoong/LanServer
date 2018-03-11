@@ -129,7 +129,7 @@ bool			ProfileEnd(WCHAR *pwSampleName)
 	///////////////////////////////////////////////////////////////////
 	pSample->lCallCount++;
 
-	pSample->liStartTime.QuadPart = 0;
+	memset(&pSample->liStartTime, 0, sizeof(LARGE_INTEGER));
 
 	return true;
 }
