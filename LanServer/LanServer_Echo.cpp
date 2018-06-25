@@ -53,6 +53,7 @@ void CLanServerEcho::OnRecv(__int64 ClientID, CNPacket *pPacket)			// 패킷 수신 
 	SendPacket(ClientID, pSendPacket);
 
 	pSendPacket->Free();
+	pPacket->Free();
 }
 
 void CLanServerEcho::OnSend(__int64 ClientID, int sendsize)				// 패킷 송신 완료 후

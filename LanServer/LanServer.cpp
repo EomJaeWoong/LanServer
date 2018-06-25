@@ -694,6 +694,7 @@ bool				CLanServer::SendPost(SESSION *pSession)
 bool				CLanServer::CompleteRecv(SESSION *pSession, DWORD dwTransferred)
 {
 	short header;
+	CNPacket *pPacket = nullptr;
 
 	//////////////////////////////////////////////////////////////////////////////
 	// RecvQ WritePos 이동(받은 만큼)
@@ -701,12 +702,12 @@ bool				CLanServer::CompleteRecv(SESSION *pSession, DWORD dwTransferred)
 	if (dwTransferred != pSession->_RecvQ.MoveWritePos(dwTransferred))
 		CCrashDump::Crash();
 
-	PRO_BEGIN(L"Packet Alloc");
-	CNPacket *pPacket = CNPacket::Alloc();
-	PRO_END(L"Packet Alloc");
-
 	while (pSession->_RecvQ.GetUseSize() > 0)
 	{
+		PRO_BEGIN(L"Packet Alloc");
+		pPacket = CNPacket::Alloc();
+		PRO_END(L"Packet Alloc");
+
 		PRO_BEGIN(L"Recv BufferDeque");
 		//////////////////////////////////////////////////////////////////////////
 		// RecvQ에 헤더 길이만큼 있는지 검사 후 있으면 Peek
@@ -738,10 +739,6 @@ bool				CLanServer::CompleteRecv(SESSION *pSession, DWORD dwTransferred)
 
 		InterlockedIncrement((LONG *)&_lRecvPacketCounter);
 	}
-
-	PRO_BEGIN(L"Packet Free");
-	pPacket->Free();
-	PRO_END(L"Packet Free");
 
 	PRO_BEGIN(L"RecvPost");
 	RecvPost(pSession);
@@ -888,7 +885,7 @@ void				CLanServer::ReleaseSession(SESSION *pSession)
 		))
 		return;
 
-	OnClientLeave(pSession->_iSessionID);
+	closesocket(pSession->_SessionInfo._Socket);
 
 	pSession->_SessionInfo._Socket = INVALID_SOCKET;
 
@@ -920,6 +917,8 @@ void				CLanServer::ReleaseSession(SESSION *pSession)
 	pSession->_lSentPacketCnt = 0;
 
 	InterlockedExchange((long *)&pSession->_bSendFlag, false);
+
+	OnClientLeave(pSession->_iSessionID);
 
 	pSession->_IOBlock->_iReleaseFlag = false;
 	InsertBlankSessionIndex(GET_SESSIONINDEX(pSession->_iSessionID));
