@@ -582,7 +582,7 @@ void				CLanServer::RecvPost(SESSION *pSession, bool bAcceptRecv)
 
 bool				CLanServer::SendPost(SESSION *pSession)
 {
-	int result, iCount = 0;
+	int result, iCount;
 	DWORD dwSendSize, dwFlag = 0;
 	WSABUF wBuf[eMAX_WSABUF];
 
@@ -617,7 +617,7 @@ bool				CLanServer::SendPost(SESSION *pSession)
 			break;
 		}
 
-		if (eMAX_WSABUF <= iCount)
+		if (eMAX_WSABUF <= iSendQUseSize)
 			iSendQUseSize = eMAX_WSABUF;
 		
 
@@ -625,7 +625,7 @@ bool				CLanServer::SendPost(SESSION *pSession)
 		// WSABUF에 패킷 넣기
 		///////////////////////////////////////////////////////////////////////////////////
 		CNPacket *pPacket = nullptr;
-		while (0 != pSession->_SendQ.GetUseSize())
+		for (iCount = 0; iCount < iSendQUseSize; iCount++)
 		{
 			if (!pSession->_SendQ.Get(&pPacket))
 				break;
@@ -634,8 +634,6 @@ bool				CLanServer::SendPost(SESSION *pSession)
 			wBuf[iCount].len = pPacket->GetDataSize();
 
 			pSession->_pSentPacket[iCount] = (char *)pPacket;
-
-			iCount++;
 		}
 
 		pSession->_lSentPacketCnt += iCount;
