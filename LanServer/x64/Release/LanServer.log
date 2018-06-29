@@ -1,4 +1,4 @@
-﻿빌드 시작: 2018-06-27 오전 11:32:22
+﻿빌드 시작: 2018-06-29 오전 11:36:45
      1>2 노드의 "C:\Users\USER\Documents\Visual Studio 2013\Projects\지금하는거\LanServer\LanServer\LanServer.vcxproj" 프로젝트(Build 대상)입니다.
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /Zi /nologo /W3 /WX- /sdl /Od /Oi /GL /D WIN32 /D NDEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm- /EHsc /MT /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Yu"stdafx.h" /Fp"x64\Release\LanServer.pch" /Fo"x64\Release\\" /Fd"x64\Release\vc120.pdb" /Gd /TP /errorReport:prompt LanServer.cpp
@@ -22,4 +22,4 @@
 
 빌드했습니다.
 
-경과 시간: 00:00:01.16
+경과 시간: 00:00:01.04

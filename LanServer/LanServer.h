@@ -155,7 +155,6 @@ public :
 	// 모니터링 변수
 	///////////////////////////////////////////////////////////////////////////////////////////
 	long						_lAcceptCounter;
-	long						_lAcceptTotalCounter;
 	long						_lRecvPacketCounter;
 	long						_lSendPacketCounter;
 

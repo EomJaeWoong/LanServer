@@ -918,7 +918,6 @@ void				CLanServer::ReleaseSession(SESSION *pSession)
 
 	OnClientLeave(pSession->_iSessionID);
 
-	pSession->_IOBlock->_iReleaseFlag = false;
 	InsertBlankSessionIndex(GET_SESSIONINDEX(pSession->_iSessionID));
 
 	InterlockedDecrement((LONG *)&_lSessionCount);
